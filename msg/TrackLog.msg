@@ -1,2 +1,2 @@
 std_msgs/Header header
-uuv-teach-repeat/TrackPoint[] trackpoints
+uuv_teach_repeat/TrackPoint[] trackpoints

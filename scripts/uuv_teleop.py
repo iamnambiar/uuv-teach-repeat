@@ -24,18 +24,9 @@ class ROVTeleop(object):
     Base class for teleop
     '''
     def __init__(self):
-        twistTopic = 'cmd_vel'
-        recordTopic = '/record_pressed'
-        startTopic = '/start_pressed'
-
-        if (rospy.has_param("twist_topic")):
-            twistTopic = rospy.get_param("twist_topic")
-        
-        if (rospy.has_param("record_topic")):
-            recordTopic = rospy.get_param("record_topic")
-
-        if (rospy.has_param("start_topic")):
-            startTopic = rospy.get_param("start_topic")
+        twistTopic = rospy.get_param('~twist_topic', '/cmd_vel')
+        recordTopic = rospy.get_param('~record_topic', '/record_pressed')
+        startTopic = rospy.get_param('~start_topic', '/start_pressed')
 
         self._twistPub = rospy.Publisher(twistTopic, Twist, queue_size=1)
         self._recordPressedPub = rospy.Publisher(recordTopic, Bool, queue_size=1)

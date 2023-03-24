@@ -17,40 +17,63 @@
 import rospy 
 from std_msgs.msg import Bool
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Pose
+from sensor_msgs.msg import Image
+from uuv_teach_repeat.msg import TrackPoint, TrackLog
 import yaml
 
 class Teach(object):
     def __init__(self):
         isRecordPressedTopic = "/record_pressed"
-        robotPoseTopic = "/rexrov/pose_gt"
+        robotPoseTopic = "/pose"
+        leftCameraImageTopic = "/left/image"
+        rightCameraImageTopic = "/right/image"
+        self._frameId = 'world'
         self._robotPose = None
-        self._wayPoseSet = WayPoseSet()
+        self._leftImage = None
+        self._rightImage = None
+        self._trackLog = TrackLog()
         self._recordPressedSub = rospy.Subscriber(isRecordPressedTopic, Bool, self.record_pressed_callback)
-        self._robotPoseSub = rospy.Subscriber(robotPoseTopic, Odometry, self.robot_pose_callback)
+        robotPoseSub = rospy.Subscriber(robotPoseTopic, Odometry, self.robot_pose_callback)
+        leftImageSub = rospy.Subscriber(leftCameraImageTopic, Image, self.left_image_callback)
+        rightImageSub = rospy.Subscriber(rightCameraImageTopic, Image, self.right_image_callback)
     
     def robot_pose_callback(self, poseData:Odometry):
         if poseData is not None:
             self._robotPose = poseData.pose.pose
 
+    def get_trackpoint(self, includeAll=True):
+        trackPoint = TrackPoint()
+        trackPoint.header.frame_id = self._frameId
+        trackPoint.header.stamp = rospy.Time.now()
+        trackPoint.pose = self._robotPose
+        trackPoint.isFixed = includeAll
+        if includeAll:
+            trackPoint.leftImage = self._leftImage
+            trackPoint.rightImage = self._rightImage
+        return trackPoint
+
     def record_pressed_callback(self, msg=None):
         if ((msg is not None) and self._robotPose is not None):
             if msg.data:
-                rospy.loginfo("Record Pressed")
-                # Get the current pose data and change it into waypoints. In the end save it to a file.
-                wayPose = WayPose()
-                wayPose.pose = self._robotPose
-                self._wayPoseSet.wayPoseList.append(wayPose)
-                rospy.loginfo("Pose Saved")
+                trackPoint = self.get_trackpoint()
+                self._trackLog.trackpoints.append(trackPoint)
+    
+    def left_image_callback(self, image):
+        if image is not None:
+            self._leftImage = image
+
+    def right_image_callback(self, image):
+        if image is not None:
+            self._rightImage = image
     
     def exportWayPosesToFile(self, filePath):
         try:
-            data = dict(wayposes=list())
-            for wp in self._wayPoseSet.wayPoseList:
-                positionDict = dict(position=[float(wp.pose.position.x), float(wp.pose.position.y), float(wp.pose.position.z)])
-                orientationDict = dict(orientation=[float(wp.pose.orientation.x), float(wp.pose.orientation.y), float(wp.pose.orientation.z)])
-                individualPoseDict = dict(pose=[positionDict, orientationDict])
-                data["wayposes"].append(individualPoseDict)
+            data = dict(trackpoints=list())
+            for tp in self._trackLog.trackpoints:
+                positionDict = dict(position=[float(tp.pose.position.x), float(tp.pose.position.y), float(tp.pose.position.z)])
+                orientationDict = dict(orientation=[float(tp.pose.orientation.x), float(tp.pose.orientation.y), float(tp.pose.orientation.z), float(tp.pose.orientation.w)])
+                trackPointDict = dict(pose=[positionDict, orientationDict], isFixed=tp.isFixed)
+                data["trackpoints"].append(trackPointDict)
             with open(filePath, 'w') as wp_file:
                 yaml.dump(data, wp_file, default_flow_style=False)
             
@@ -82,19 +105,7 @@ class ContinuousTeach(Teach):
         if self._continuousModeOn:
             duration = rospy.Time.now() - self._lastRecordedTime
             if (duration.to_sec() > 0.5):
-                wayPose = WayPose()
-                wayPose.pose = self._robotPose
-                self._wayPoseSet.wayPoseList.append(wayPose)  
+                trackPoint = self.get_trackpoint(includeAll=False)
+                self._trackLog.trackpoints.append(trackPoint)  
                 self._lastRecordedTime = rospy.Time.now()
-                # rospy.loginfo('Recorded: {0} seconds'.format(duration.to_sec()))
-
-
-if __name__ == "__main__":
-    rospy.init_node("teach_node", anonymous=True)
-    rospy.loginfo('Starting teach_node')
-
-    teach = ContinuousTeach()
-
-    rospy.spin()
-    teach.exportWayPosesToFile('/home/iamnambiar/poseConfig.yaml')
-    rospy.loginfo('Shutting down teach_node')
+                

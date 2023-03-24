@@ -1,0 +1,25 @@
+<launch>
+    <arg name="model" default="rexrov"/>
+    <arg name="joy_id" default="2"/>
+
+    <include file="$(find uuv_gazebo_worlds)/launch/lake_with_objects.launch"></include>
+    <include file="$(find uuv_descriptions)/launch/upload_rexrov.launch">
+        <arg name="x" default="20"/>
+        <arg name="y" default="0"/>
+        <arg name="z" default="-20"/>
+        <arg name="yaw" default="0"/>
+    </include>
+
+    <include file="$(find uuv_trajectory_control)/launch/rov_pid_controller.launch">
+        <arg name="uuv_name" value="$(arg model)"/>
+        <arg name="model_name" value="$(arg model)"/>
+    </include>
+
+    <node pkg="joy" type="joy_node" name="joystick">
+      <param name="autorepeat_rate" value="10"/>
+      <param name="dev" value="/dev/input/js$(arg joy_id)"/>
+    </node>
+
+    <node name="rviz" pkg="rviz" type="rviz" output="screen" args="-d $(find uuv_gazebo)/rviz/controller_demo.rviz"/>
+
+</launch>

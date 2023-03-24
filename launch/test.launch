@@ -1,0 +1,11 @@
+<launch>
+    <arg name="twist_topic" default="/rexrov/cmd_vel"/>
+    <arg name="record_topic" default="/record_pressed"/>
+    <arg name="start_topic" default="/start_pressed"/>
+
+    <node name="teleop" pkg="uuv_teach_repeat" type="test.py" output="screen">
+        <param name="twist_topic" value="$(arg twist_topic)"></param>
+        <param name="record_topic" value="$(arg record_topic)"></param>
+        <param name="start_topic" value="$(arg start_topic)"></param>
+    </node>
+</launch>
