@@ -14,15 +14,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import rospy
 import uuv_teleop
-from uuv_teach import Teach
+import uuv_teach
+import uuv_repeat
 
 if __name__ == "__main__":
     rospy.init_node("uuv_teach_and_repeat_node")
     rospy.loginfo("Starting uuv_teach_and_repeat_node")
-    rospy.loginfo("Initialising teleop")
+
+    mode = rospy.get_param('mode', 'teach')
+    if str.lower(mode) == 'teach':
+        rospy.loginfo("Teach mode selected.")
+        rospy.loginfo("Initialising teleop...")
+        uuv_teleop.ROVJoystickTeleop()
+        teach = uuv_teach.ContinuousTeach()
+        rospy.spin()
+        filepath = rospy.get_param('~filepath')
+        filename = os.path.join(filepath, 'waypoint.yaml')
+        teach.export_tracklog_to_file(filename)
+
+    elif str.lower(mode) == 'repeat':
+        repeat = uuv_repeat.Repeat()
+        filepath = rospy.get_param('~filepath')
+        filename = os.path.join(filepath, 'waypoint.yaml')
+        repeat.read_tracklog_from_file(filename)
+        repeat.repeat_points()
     
-    uuv_teleop.ROVJoystickTeleop()
-    rospy.spin()
+    else:
+        rospy.logerr('Invalid mode selected... Please select \'teach\' or \'repeat\' mode')
     rospy.loginfo("Shutting down uuv_teach_and_repeat_node")
