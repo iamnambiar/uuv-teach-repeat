@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import rospy 
 from std_msgs.msg import Bool
 from nav_msgs.msg import Odometry
@@ -25,11 +26,13 @@ import yaml
 class Teach(object):
     def __init__(self):
         isRecordPressedTopic = rospy.get_param('~record_topic', '/record_pressed')
+        isSavePressedTopic = rospy.get_param('~save_topic', '/save_pressed')
         robotPoseTopic = rospy.get_param('~pose_topic', '/pose')
         self._frameId = 'world'
         self._robotPose = None
         self._trackLog = TrackLog()
         self._recordPressedSub = rospy.Subscriber(isRecordPressedTopic, Bool, self.record_pressed_callback)
+        self._savePressedSub = rospy.Subscriber(isSavePressedTopic, Bool, self.save_pressed_callback)
         robotPoseSub = rospy.Subscriber(robotPoseTopic, Odometry, self.robot_pose_callback)
     
     def robot_pose_callback(self, poseData:Odometry):
@@ -42,9 +45,6 @@ class Teach(object):
         trackPoint.header.stamp = rospy.Time.now()
         trackPoint.pose = self._robotPose
         trackPoint.isFixed = includeAll
-        if includeAll:
-            trackPoint.leftImage = self._leftImage
-            trackPoint.rightImage = self._rightImage
         return trackPoint
 
     def record_pressed_callback(self, msg=None):
@@ -53,6 +53,16 @@ class Teach(object):
                 trackPoint = self.get_trackpoint()
                 self._trackLog.trackpoints.append(trackPoint)
                 rospy.loginfo(trackPoint)
+    
+    def save_pressed_callback(self, msg=None):
+        if msg is not None:
+            if msg.data:
+                filepath = rospy.get_param('~filepath')
+                if os.path.exists(filepath):
+                    filename = os.path.join(filepath, 'tracklog.yaml')
+                    self.export_tracklog_to_file(filename)
+                else:
+                    rospy.logerr('The path \'{0}\' doesnot exist')
     
     def export_tracklog_to_file(self, fileName):
         try:

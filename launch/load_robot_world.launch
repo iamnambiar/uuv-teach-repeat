@@ -20,6 +20,6 @@
       <param name="dev" value="/dev/input/js$(arg joy_id)"/>
     </node>
 
-    <node name="rviz" pkg="rviz" type="rviz" output="screen" args="-d $(find uuv_gazebo)/rviz/controller_demo.rviz"/>
+    <node name="rviz" pkg="rviz" type="rviz" output="screen" args="-d $(find uuv_teach_repeat)/rviz/test_demo.rviz"/>
 
 </launch>

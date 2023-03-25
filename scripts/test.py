@@ -24,21 +24,20 @@ if __name__ == "__main__":
     rospy.init_node("uuv_teach_and_repeat_node")
     rospy.loginfo("Starting uuv_teach_and_repeat_node")
 
-    mode = rospy.get_param('mode', 'teach')
+    mode = rospy.get_param('~mode', 'teach')
+    rospy.loginfo('{0} is the selected mode.'.format(mode))
     if str.lower(mode) == 'teach':
         rospy.loginfo("Teach mode selected.")
         rospy.loginfo("Initialising teleop...")
         uuv_teleop.ROVJoystickTeleop()
+        rospy.loginfo("Initialising continuous teach mode...")
         teach = uuv_teach.ContinuousTeach()
         rospy.spin()
-        filepath = rospy.get_param('~filepath')
-        filename = os.path.join(filepath, 'waypoint.yaml')
-        teach.export_tracklog_to_file(filename)
 
     elif str.lower(mode) == 'repeat':
         repeat = uuv_repeat.Repeat()
         filepath = rospy.get_param('~filepath')
-        filename = os.path.join(filepath, 'waypoint.yaml')
+        filename = os.path.join(filepath, 'tracklog.yaml')
         repeat.read_tracklog_from_file(filename)
         repeat.repeat_points()
     

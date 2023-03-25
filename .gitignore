@@ -1,3 +1,4 @@
 *.bag
 __pycache__
+config
 

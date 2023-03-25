@@ -27,10 +27,12 @@ class ROVTeleop(object):
         twistTopic = rospy.get_param('~twist_topic', '/cmd_vel')
         recordTopic = rospy.get_param('~record_topic', '/record_pressed')
         startTopic = rospy.get_param('~start_topic', '/start_pressed')
+        saveTopic = rospy.get_param('~save_topic', '/save_pressed')
 
         self._twistPub = rospy.Publisher(twistTopic, Twist, queue_size=1)
         self._recordPressedPub = rospy.Publisher(recordTopic, Bool, queue_size=1)
         self._startPressedPub = rospy.Publisher(startTopic, Bool, queue_size=1)
+        self._savePressedPub = rospy.Publisher(saveTopic, Bool, queue_size=1)
 
 class ROVJoystickTeleop(ROVTeleop):
     '''
@@ -39,10 +41,11 @@ class ROVJoystickTeleop(ROVTeleop):
     def __init__(self):
         super().__init__()
         self._axisKeys = { "x":1, "y":0, "z":7, "roll":-1, "pitch":3, "yaw":2 }
-        self._axisGains = { "x":1.0, "y":1.0, "z":1.0, "roll":1.0, "pitch":1.0, "yaw":1.0 }
-        self._buttonKeys = { "record":0, "start":11 }
-        self._isRecordON = False
-        self._isStartON = False
+        self._axisGains = { "x":0.5, "y":0.5, "z":0.5, "roll":0.5, "pitch":0.5, "yaw":0.5 }
+        self._buttonKeys = { "record":0, "start":4, "save":11 }
+        self._isRecordPressed = False
+        self._isStartPressed = False
+        self._isSavePressed = False
         self._deadzone = 0.2        # Deadzone is used to remove the unwanted motion created because of joystick error.
 
         for key, val in self._axisKeys.items():
@@ -58,17 +61,23 @@ class ROVJoystickTeleop(ROVTeleop):
         twistMsg = Twist()
         recordStateChanged = False
         startStateChanged = False
+        saveStateChanged = False
         if joy is not None:
             isRecordPressed = bool(joy.buttons[self._buttonKeys["record"]] > 0)
-            if (isRecordPressed and (self._isRecordON != isRecordPressed)):
+            if (isRecordPressed and (self._isRecordPressed != isRecordPressed)):
                 recordStateChanged = True
             
             isStartPressed = bool(joy.buttons[self._buttonKeys["start"]] > 0)
-            if (isStartPressed and (self._isStartON != isStartPressed)):
+            if (isStartPressed and (self._isStartPressed != isStartPressed)):
                 startStateChanged = True
             
-            self._isRecordON = isRecordPressed
-            self._isStartON = isStartPressed
+            isSavePressed = bool(joy.buttons[self._buttonKeys["save"]] > 0)
+            if (isSavePressed and (self._isSavePressed != isSavePressed)):
+                saveStateChanged = True
+            
+            self._isRecordPressed = isRecordPressed
+            self._isStartPressed = isStartPressed
+            self._isSavePressed = isSavePressed
             if (self._axisKeys["x"] >= 0 and (abs(joy.axes[self._axisKeys["x"]]) > self._deadzone)):
                 twistMsg.linear.x = (joy.axes[self._axisKeys["x"]] * self._axisGains["x"])
 
@@ -87,7 +96,7 @@ class ROVJoystickTeleop(ROVTeleop):
             if (self._axisKeys["yaw"] >= 0 and (abs(joy.axes[self._axisKeys["yaw"]]) > self._deadzone)):
                 twistMsg.angular.z = (joy.axes[self._axisKeys["yaw"]] * self._axisGains["yaw"])
         
-        return twistMsg, [recordStateChanged, startStateChanged]
+        return twistMsg, [recordStateChanged, startStateChanged, saveStateChanged]
     
     def joy_callback(self, joy:Joy):
         try:
@@ -95,6 +104,7 @@ class ROVJoystickTeleop(ROVTeleop):
             self._twistPub.publish(twistMsg)
             self._recordPressedPub.publish(Bool(others[0]))
             self._startPressedPub.publish(Bool(others[1]))
+            self._savePressedPub.publish(Bool(others[2]))
         except Exception as e:
             rospy.logerr('Unable to parse joystick input. Please check if the joy_id corresponds to the joystick being used. message={}'.format(e))
 

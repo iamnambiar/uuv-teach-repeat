@@ -54,7 +54,6 @@ class Repeat(object):
                     tp.pose.orientation = Quaternion(x=orientation[0], y=orientation[1], z=orientation[2], w=orientation[3])
                     tp.isFixed = tp_data['isFixed']
                     self._trackLog.trackpoints.append(tp)
-                    
             return True
         except Exception as e:
             rospy.logerr("Error occured while reading recorded poses from file, message = {}".format(e))
@@ -68,16 +67,16 @@ class Repeat(object):
             rate = rospy.Rate(5)
             req = InitWaypointSetRequest()
             req.start_now = True
-            req.max_forward_speed = 0.5
-            req.heading_offset = 0.5
-            req.interpolator = rospy.get_param('~interpolator', 'dubins')
+            req.max_forward_speed = 0.25
+            req.heading_offset = 0.25
+            req.interpolator.data = rospy.get_param('~interpolator', 'dubins')
             for tp in self._trackLog.trackpoints:
                 waypoint = Waypoint()
                 waypoint.header = self._trackLog.header
                 waypoint.heading_offset = req.heading_offset
                 waypoint.max_forward_speed = req.max_forward_speed
                 waypoint.use_fixed_heading = False
-                waypoint.point = Point(x=tp.pose.position[0], y=tp.pose.position[1], z=tp.pose.position[2])
+                waypoint.point = Point(x=tp.pose.position.x, y=tp.pose.position.y, z=tp.pose.position.z)
                 req.waypoints.append(waypoint)
 
                 if tp.isFixed:
