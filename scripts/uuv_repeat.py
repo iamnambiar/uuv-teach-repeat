@@ -91,36 +91,3 @@ class Repeat(object):
                     req.waypoints.clear()
         except rospy.ServiceException as e:
             rospy.logerr("{0} service call failed because \"{1}\"".format(service_name, e))
-            
-
-                
-                
-
-    # def repeat_points(self):
-    #     rospy.wait_for_service('/rexrov/go_to')
-    #     try:
-    #         client = rospy.ServiceProxy('/rexrov/go_to', GoTo)
-    #         rate = rospy.Rate(5)
-    #         for tp in self._trackLog.trackpoints:
-    #             pose = tp.pose
-    #             req = GoToRequest()
-    #             req.interpolator = req.DUBINS
-    #             req.max_forward_speed = 0.5
-    #             req.waypoint.header.stamp = rospy.Time.now()
-    #             req.waypoint.header.frame_id = self._trackLog.header.frame_id
-    #             req.waypoint.point = pose.position
-    #             req.waypoint.max_forward_speed = 1.0
-    #             req.waypoint.use_fixed_heading = False
-    #             rospy.loginfo("Moving to pose: {}".format(pose.position))
-    #             res = client(req)
-    #             if res.success:
-    #                 rospy.sleep(2.)
-    #                 while (self._isTrajectoryRunning):
-    #                     rate.sleep()
-    #             else:
-    #                 rospy.logerr("Unable to load trajectory")
-    #                 return False
-    #         return True
-
-    #     except rospy.ServiceException as e:
-    #         rospy.logerr("Service call failed")
