@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   message_generation
 )
+find_package(uuv_control_msgs REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -86,6 +87,7 @@ generate_messages(
   std_msgs
   sensor_msgs
   geometry_msgs
+  uuv_control_msgs
 )
 
 ################################################
