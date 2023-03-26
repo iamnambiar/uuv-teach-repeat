@@ -52,7 +52,7 @@ class Repeat(object):
                     tp.pose = Pose()
                     tp.pose.position = Point(x=position[0], y=position[1], z=position[2])
                     tp.pose.orientation = Quaternion(x=orientation[0], y=orientation[1], z=orientation[2], w=orientation[3])
-                    tp.isFixed = tp_data['isFixed']
+                    tp.isRecorded = tp_data['isRecorded']
                     self._trackLog.trackpoints.append(tp)
             return True
         except Exception as e:
@@ -79,7 +79,7 @@ class Repeat(object):
                 waypoint.point = Point(x=tp.pose.position.x, y=tp.pose.position.y, z=tp.pose.position.z)
                 req.waypoints.append(waypoint)
 
-                if tp.isFixed:
+                if tp.isRecorded:
                     res = client(req)
                     if res.success:
                         rospy.sleep(2.)

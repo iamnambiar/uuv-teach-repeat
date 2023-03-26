@@ -13,9 +13,12 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   sensor_msgs
+  uuv_control_msgs
+  detection_msgs
   message_generation
 )
-find_package(uuv_control_msgs REQUIRED)
+# find_package(uuv_control_msgs REQUIRED)
+# find_package(detection_msgs REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -88,6 +91,7 @@ generate_messages(
   sensor_msgs
   geometry_msgs
   uuv_control_msgs
+  detection_msgs
 )
 
 ################################################
@@ -132,10 +136,7 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(
-# include
-  ${catkin_INCLUDE_DIRS}
-)
+include_directories(include ${catkin_INCLUDE_DIRS})
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}

@@ -20,6 +20,7 @@ from std_msgs.msg import Bool
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Image
 from uuv_teach_repeat.msg import TrackPoint, TrackLog
+from detection_msgs.msg import BoundingBoxes
 import yaml
 
 class Teach(object):
@@ -27,23 +28,32 @@ class Teach(object):
         isRecordPressedTopic = rospy.get_param('~record_topic', '/record_pressed')
         isSavePressedTopic = rospy.get_param('~save_topic', '/save_pressed')
         robotPoseTopic = rospy.get_param('~pose_topic', '/pose')
+        objDetectOutputTopic = rospy.get_param('~bounding_boxes_topic', '/bounding_boxes')
         self._frameId = 'world'
         self._robotPose = None
+        self._boundingBoxes = None
         self._trackLog = TrackLog()
         self._recordPressedSub = rospy.Subscriber(isRecordPressedTopic, Bool, self.record_pressed_callback)
         self._savePressedSub = rospy.Subscriber(isSavePressedTopic, Bool, self.save_pressed_callback)
         robotPoseSub = rospy.Subscriber(robotPoseTopic, Odometry, self.robot_pose_callback)
+        boundingBoxesSub = rospy.Subscriber(objDetectOutputTopic, BoundingBoxes, self.bounding_boxes_callback)
     
-    def robot_pose_callback(self, poseData:Odometry):
+    def robot_pose_callback(self, poseData):
         if poseData is not None:
             self._robotPose = poseData.pose.pose
+    
+    def bounding_boxes_callback(self, bb):
+        if bb is not None:
+            self._boundingBoxes = bb
 
     def get_trackpoint(self, includeAll=True):
         trackPoint = TrackPoint()
         trackPoint.header.frame_id = self._frameId
         trackPoint.header.stamp = rospy.Time.now()
         trackPoint.pose = self._robotPose
-        trackPoint.isFixed = includeAll
+        trackPoint.isRecorded = includeAll
+        if includeAll:
+            trackPoint.boundingBoxes = self._boundingBoxes
         return trackPoint
 
     def record_pressed_callback(self, msg=None):
@@ -69,7 +79,11 @@ class Teach(object):
             for tp in self._trackLog.trackpoints:
                 positionDict = dict(position=[float(tp.pose.position.x), float(tp.pose.position.y), float(tp.pose.position.z)])
                 orientationDict = dict(orientation=[float(tp.pose.orientation.x), float(tp.pose.orientation.y), float(tp.pose.orientation.z), float(tp.pose.orientation.w)])
-                trackPointDict = dict(pose=[positionDict, orientationDict], isFixed=tp.isFixed)
+                trackPointDict = dict(pose=[positionDict, orientationDict], isRecorded=tp.isRecorded, boundingBoxes=list())
+                if (tp.boundingBoxes is not None) and (tp.boundingBoxes.bounding_boxes is not None):
+                    for bb in tp.boundingBoxes.bounding_boxes:
+                        bb_dict = dict(Class=bb.Class, probability=bb.probability, xmin=bb.xmin, ymin=bb.ymin, xmax=bb.xmax, ymax=bb.ymax)
+                        trackPointDict['boundingBoxes'].append(bb_dict)
                 data["tracklog"].append(trackPointDict)
             with open(fileName, 'w') as wp_file:
                 yaml.dump(data, wp_file, default_flow_style=False)

@@ -1,3 +1,4 @@
 std_msgs/Header header
-bool isFixed
+bool isRecorded
 geometry_msgs/Pose pose
+detection_msgs/BoundingBoxes boundingBoxes
