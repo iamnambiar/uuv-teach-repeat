@@ -20,7 +20,6 @@ from std_msgs.msg import Bool
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Image
 from uuv_teach_repeat.msg import TrackPoint, TrackLog
-# from detection_msgs.msg import BoundingBoxes
 import yaml
 
 class Teach(object):
