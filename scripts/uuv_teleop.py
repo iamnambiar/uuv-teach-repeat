@@ -19,6 +19,11 @@ from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Joy
 from std_msgs.msg import Bool
 
+import sys
+from select import select
+import termios
+import tty
+
 class ROVTeleop(object):
     '''
     Base class for teleop
@@ -111,10 +116,91 @@ class ROVJoystickTeleop(ROVTeleop):
 class ROVKeyboardTeleop(ROVTeleop):
     '''
     This class is used to control the robot using keyboard teleop.
-    
-    
-    \\?> To be implemented later
     '''
     def __init__(self):
         super().__init__()
+        self.settings = termios.tcgetattr(sys.stdin)
+        self._axisKeys = { "x+":'w', "x-":'s', "z+":'i', "z-":'k', "az+":'a', "az-":'d' }
+        self._axisGains = { "x+":0.5, "x-":0.5, "z+":0.5, "z-":0.5, "az+":0.5, "az-":0.5 }
+        # Ctrl + Q = Start
+        # Ctrl + R = Record
+        # Ctrl + S = Save
+        self._buttonKeys = { "record":'\x12', "start":'\x11', "save":'\x13' }
+        self._isRecordPressed = False
+        self._isStartPressed = False
+        self._isSavePressed = False
 
+        rate = rospy.Rate(50)
+        while not rospy.is_shutdown():
+            rate.sleep()
+            self.keyboard_callback()
+    
+    def get_key(self):
+        tty.setraw(sys.stdin.fileno())
+        rlist, _, _ = select([sys.stdin], [], [], 0.1)
+        if rlist:
+            key = sys.stdin.read(1)
+        else:
+            key = ''
+        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.settings)
+        return key
+
+    def parse_keyboard(self):
+        twistMsg = Twist()
+        recordStateChanged = False
+        startStateChanged = False
+        saveStateChanged = False
+
+        key_pressed = self.get_key()
+        if key_pressed != '':
+            if (key_pressed == self._axisKeys['x+']):
+                twistMsg.linear.x = self._axisGains['x+']
+            elif (key_pressed == self._axisKeys['x-']):
+                twistMsg.linear.x = -1 * self._axisGains['x-']
+            elif (key_pressed == self._axisKeys['z+']):
+                twistMsg.linear.z = self._axisGains['z+']
+            elif (key_pressed == self._axisKeys['z-']):
+                twistMsg.linear.z = -1 * self._axisGains['z-']
+            elif (key_pressed == self._axisKeys['az+']):
+                twistMsg.angular.z = self._axisGains['az+']
+            elif (key_pressed == self._axisKeys['az-']):
+                twistMsg.angular.z = -1 * self._axisGains['az-']
+            
+            if (key_pressed == self._buttonKeys['record']):
+                recordStateChanged = True
+            elif (key_pressed == self._buttonKeys['start']):
+                startStateChanged = True
+            elif (key_pressed == self._buttonKeys['save']):
+                saveStateChanged = True
+
+        if (key_pressed == '\x03'):
+            rospy.loginfo('Keyboard Interrupt Pressed')
+            exit(-1)
+        
+        return twistMsg, [recordStateChanged, startStateChanged, saveStateChanged] 
+    
+    def keyboard_callback(self):
+        try:
+            twistMsg, others = self.parse_keyboard()
+            self._twistPub.publish(twistMsg)
+            self._recordPressedPub.publish(Bool(others[0]))
+            self._startPressedPub.publish(Bool(others[1]))
+            self._savePressedPub.publish(Bool(others[2]))
+        except Exception as e:
+            rospy.logerr('Unable to parse keyboard input. message={}'.format(e))
+
+
+if __name__ == "__main__":
+    rospy.init_node("teleop_node")
+    rospy.logwarn("Initialising teleop_node")
+
+    teleopType = rospy.get_param('~teleop_type', 'joystick')
+    if teleopType == 'joystick':
+        ROVJoystickTeleop()
+        rospy.spin()
+    elif teleopType == 'keyboard':
+        ROVKeyboardTeleop()
+    else:
+        rospy.logerr('Unsupported teleop_type: {0}. Only \'{1}\' and \'{2}\' are supported.'.format(teleopType, 'joystick', 'keyboard'))
+    
+    rospy.logwarn("Shutting down teleop_node")

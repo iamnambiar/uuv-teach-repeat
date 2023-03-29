@@ -3,21 +3,36 @@
     <arg name="twist_topic" default="/rexrov/cmd_vel"/>
     <arg name="record_topic" default="/record_pressed"/>
     <arg name="start_topic" default="/start_pressed"/>
+    <arg name="save_topic" default="/save_pressed"/>
     <arg name="pose_topic" default="/rexrov/pose_gt"/>
     <arg name="filepath" default="$(find uuv_teach_repeat)/config"/>
     <arg name="trajectory_tracking_topic" default="/rexrov/trajectory_tracking_on"/>
     <arg name="send_wp_service" default="/rexrov/start_waypoint_list"/>
     <arg name="interpolator" default="dubins"/>
+    <arg name="bounding_boxes_topic" default="/yolov5/detections"/>
+    <arg name="teleop_type" default="joystick"/>
+
+    <group if="$(eval $(arg mode) == 'teach')">
+        <node name="teleop_node" pkg="uuv_teach_repeat" type="uuv_teleop.py" output="screen">
+            <param name="teleop_type" value="$(arg teleop_type)"></param>
+            <param name="twist_topic" value="$(arg twist_topic)"></param>
+            <param name="record_topic" value="$(arg record_topic)"></param>
+            <param name="start_topic" value="$(arg start_topic)"></param>
+            <param name="save_topic" value="$(arg save_topic)"></param>
+        </node>
+    </group>
 
     <node name="teach_repeat_test" pkg="uuv_teach_repeat" type="test.py" output="screen">
         <param name="mode" value="$(arg mode)"></param>
         <param name="twist_topic" value="$(arg twist_topic)"></param>
         <param name="record_topic" value="$(arg record_topic)"></param>
         <param name="start_topic" value="$(arg start_topic)"></param>
+        <param name="save_topic" value="$(arg save_topic)"></param>
         <param name="pose_topic" value="$(arg pose_topic)"></param>
         <param name="filepath" value="$(arg filepath)"></param>
         <param name="trajectory_tracking_topic" value="$(arg trajectory_tracking_topic)"></param>
         <param name="send_wp_service" value="$(arg send_wp_service)"></param>
         <param name="interpolator" value="$(arg interpolator)"/>
+        <param name="bounding_boxes_topic" value="$(arg bounding_boxes_topic)"></param>
     </node>
 </launch>

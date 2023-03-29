@@ -28,8 +28,6 @@ if __name__ == "__main__":
     rospy.loginfo('{0} is the selected mode.'.format(mode))
     if str.lower(mode) == 'teach':
         rospy.loginfo("Teach mode selected.")
-        rospy.loginfo("Initialising teleop...")
-        uuv_teleop.ROVJoystickTeleop()
         rospy.loginfo("Initialising continuous teach mode...")
         teach = uuv_teach.ContinuousTeach()
         rospy.spin()
