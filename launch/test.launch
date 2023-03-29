@@ -12,7 +12,7 @@
     <arg name="bounding_boxes_topic" default="/yolov5/detections"/>
     <arg name="teleop_type" default="joystick"/>
 
-    <group if="$(eval $(arg mode) == 'teach')">
+    <group if="$(eval arg('mode') == 'teach')">
         <node name="teleop_node" pkg="uuv_teach_repeat" type="uuv_teleop.py" output="screen">
             <param name="teleop_type" value="$(arg teleop_type)"></param>
             <param name="twist_topic" value="$(arg twist_topic)"></param>
