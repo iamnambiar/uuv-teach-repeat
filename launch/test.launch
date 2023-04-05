@@ -11,6 +11,8 @@
     <arg name="interpolator" default="dubins"/>
     <arg name="bounding_boxes_topic" default="/yolov5/detections"/>
     <arg name="teleop_type" default="joystick"/>
+    <arg name="read_image_topic" default="/rexrov/rexrov/camera/camera_image/compressed"/>
+    <arg name="write_image_topic" default="/camera/compressed_to_yolo"/>
 
     <group if="$(eval arg('mode') == 'teach')">
         <node name="teleop_node" pkg="uuv_teach_repeat" type="uuv_teleop.py" output="screen">

@@ -1,12 +1,14 @@
 <launch>
     <arg name="model" default="rexrov"/>
     <arg name="joy_id" default="2"/>
+    <arg name="read_image_topic" default="/rexrov/rexrov/camera/camera_image/compressed"/>
+    <arg name="write_image_topic" default="/camera/compressed_to_yolo"/>
 
-    <include file="$(find uuv_gazebo_worlds)/launch/lake_with_objects.launch"></include>
+    <include file="$(find uuv_gazebo_worlds)/launch/uuv_yolo.launch"></include>
     <include file="$(find uuv_descriptions)/launch/upload_rexrov.launch">
         <arg name="x" default="20"/>
-        <arg name="y" default="0"/>
-        <arg name="z" default="-20"/>
+        <arg name="y" default="-2"/>
+        <arg name="z" default="-50"/>
         <arg name="yaw" default="0"/>
     </include>
 
@@ -14,6 +16,13 @@
         <arg name="uuv_name" value="$(arg model)"/>
         <arg name="model_name" value="$(arg model)"/>
     </include>
+
+    <include file="$(find yolov5_ros)/launch/yolov5.launch"></include>
+
+    <node name="yolo_init_node" pkg="uuv_teach_repeat" type="common.py" output="screen">
+        <param name="read_image_topic" value="$(arg read_image_topic)"/>
+        <param name="write_image_topic" value="$(arg write_image_topic)"/>
+    </node>
 
     <node pkg="joy" type="joy_node" name="joystick">
       <param name="autorepeat_rate" value="10"/>

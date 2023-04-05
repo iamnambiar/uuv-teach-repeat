@@ -18,7 +18,6 @@ import os
 import rospy 
 from std_msgs.msg import Bool
 from nav_msgs.msg import Odometry
-from sensor_msgs.msg import Image
 from uuv_teach_repeat.msg import TrackPoint, TrackLog
 from detection_msgs.msg import BoundingBoxes
 import yaml
@@ -28,7 +27,7 @@ class Teach(object):
         isRecordPressedTopic = rospy.get_param('~record_topic', '/record_pressed')
         isSavePressedTopic = rospy.get_param('~save_topic', '/save_pressed')
         robotPoseTopic = rospy.get_param('~pose_topic', '/pose')
-        objDetectOutputTopic = rospy.get_param('~bounding_boxes_topic', '/bounding_boxes')
+        objDetectOutputTopic = rospy.get_param('~bounding_boxes_topic', '/yolov5/detections')
         self._frameId = 'world'
         self._robotPose = None
         self._boundingBoxes = None
@@ -61,7 +60,7 @@ class Teach(object):
             if msg.data:
                 trackPoint = self.get_trackpoint()
                 self._trackLog.trackpoints.append(trackPoint)
-                rospy.loginfo(trackPoint)
+                # rospy.loginfo(trackPoint)
     
     def save_pressed_callback(self, msg=None):
         if msg is not None:

@@ -60,7 +60,7 @@ class ROVJoystickTeleop(ROVTeleop):
                 self._axisKeys[key] = int(rospy.get_param('gain_{0}'.format(key)))
         
         # Subscriber to read joystick command
-        self._joy_sub = rospy.Subscriber('joy', Joy, self.joy_callback)
+        self._joy_sub = rospy.Subscriber('/joy', Joy, self.joy_callback)
 
     def parse_joystick_command(self, joy=None):
         twistMsg = Twist()
@@ -192,7 +192,7 @@ class ROVKeyboardTeleop(ROVTeleop):
 
 if __name__ == "__main__":
     rospy.init_node("teleop_node")
-    rospy.logwarn("Initialising teleop_node")
+    rospy.loginfo("Initialising teleop_node")
 
     teleopType = rospy.get_param('~teleop_type', 'joystick')
     if teleopType == 'joystick':
